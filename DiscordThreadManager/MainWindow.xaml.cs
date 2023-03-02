@@ -23,11 +23,12 @@ namespace DiscordThreadManager
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-    {
         public HttpClient Client = new HttpClient();
         public List<Thread> Threads = new List<Thread>();
         public DateTime DiscordEpoch = new DateTime(2015,1,1);
-        public MainWindow(){
+
+        private readonly string[] LockEmoji = { "🔒" , "  \u2006\u2006\u2006\u2006\u2006" };
+
         public MainWindow() {
             InitializeComponent();
             Client.BaseAddress = new Uri("https://discord.com/api/v10/");
@@ -44,15 +45,13 @@ namespace DiscordThreadManager
             Threads.Clear();
             await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
             await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
-
             WriteToListBox();
         }
 
         private async Task GetThreads(string apiPath, bool isActive) {
             try {
                 HttpResponseMessage resp = await Client.GetAsync(apiPath);
-
-                if (!resp.IsSuccessStatusCode){
+                if (!resp.IsSuccessStatusCode) {
                     throw new Exception("Discord API Error");
                 }
 
@@ -74,20 +73,23 @@ namespace DiscordThreadManager
             }
         }
 
-        private void WriteToListBox(){
-            //Clear and re-write
+        private string ThreadToString(Thread t) {
+            DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long) t.LastMessageTime);
+            TimeSpan timeSpan = DateTime.UtcNow - TimeOfLastMessage;
+            string time = timeSpan.Days > 3 ? $"{Math.Round(timeSpan.TotalDays, 1)} days" : $"{Math.Round(timeSpan.TotalHours, 1)} hours";
+            string emojis = (t.isLocked ? this.LockEmoji[0] : this.LockEmoji[1]) + (t.isActive ? "🔴" : "❌");
+            return $"{emojis} {t.Name} ({time})";
+        }
+
+        private void WriteToListBox() {
             ThreadList.Items.Clear();
             Threads = Threads.OrderByDescending(a => a.LastMessageTime).ToList();
-            foreach (Thread thread in Threads){
-                DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long)thread.LastMessageTime);
-                TimeSpan timeSpan = DateTime.UtcNow - TimeOfLastMessage;
-                string time = timeSpan.Days>3?$"{Math.Round(timeSpan.TotalDays, 1)} days" : $"{Math.Round(timeSpan.TotalHours, 1)} hours";
-                string emojis = (thread.isLocked?"🔒":"🔓") + (thread.isActive ? "🔴" : "❌");
-                ThreadList.Items.Add($"{emojis} {thread.Name} ({time})");
+            foreach (Thread thread in Threads) {
+                ThreadList.Items.Add(ThreadToString(thread));
             }
         }
 
-        private async void Archive_UnArchive_Click(object sender, RoutedEventArgs e){
+        private async void Archive_UnArchive_Click(object sender, RoutedEventArgs e) {
             try { 
                 Thread currentThread = Threads[ThreadList.SelectedIndex];
                 HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
