@@ -143,5 +143,9 @@ namespace DiscordThreadManager
                 MessageBox.Show(ex.Message);
             }
         }
+
+        private void ThreadList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            Open_Thread_Click(sender, e);
+        }
     }
 }

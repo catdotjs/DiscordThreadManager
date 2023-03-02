@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Discord Thread Manager" Height="475" Width="1147" FontFamily="Trebuchet MS" FontSize="16">
     <Grid x:Name="Body" Background="#FF513F5F">
-        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled"/>
+        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseDoubleClick="ThreadList_MouseDoubleClick"/>
 
         <Label Content="Made with love, by catdotjs" VerticalAlignment="Top" FontSize="12" Foreground="White" HorizontalAlignment="Left" Width="163" Margin="2,-6,0,0" Height="23"/>
         <!-- Textbox n shit -->
