@@ -22,12 +22,13 @@ namespace DiscordThreadManager
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window {
     {
         public HttpClient Client = new HttpClient();
         public List<Thread> Threads = new List<Thread>();
         public DateTime DiscordEpoch = new DateTime(2015,1,1);
         public MainWindow(){
+        public MainWindow() {
             InitializeComponent();
             Client.BaseAddress = new Uri("https://discord.com/api/v10/");
             Token.Password = Environment.GetEnvironmentVariable("THREAD_MANAGER_TOKEN");
@@ -47,9 +48,8 @@ namespace DiscordThreadManager
             WriteToListBox();
         }
 
-        private async Task GetThreads(string apiPath, bool isActive){
-            //Api Get Threads
-            try{
+        private async Task GetThreads(string apiPath, bool isActive) {
+            try {
                 HttpResponseMessage resp = await Client.GetAsync(apiPath);
 
                 if (!resp.IsSuccessStatusCode){
@@ -58,20 +58,18 @@ namespace DiscordThreadManager
 
                 string respString = await resp.Content.ReadAsStringAsync();
                 JObject respJSON = JObject.Parse(respString);
-                JArray threads = (JArray)respJSON["threads"];
-                foreach (JObject thread in threads)
-                {
-                    if ((string)thread["parent_id"] == ChannelId.Text & (string)thread["flags"] != "2")
-                    {
-                        Threads.Add(new Thread((string)thread["id"], 
-                            (string)thread["name"], 
-                            (string)thread["last_message_id"], 
+                JArray threads = (JArray) respJSON["threads"];
+                foreach (JObject thread in threads) {
+                    if ((string) thread["parent_id"] == ChannelId.Text & (string) thread["flags"] != "2") {
+                        Threads.Add(new Thread((string) thread["id"], 
+                            (string) thread["name"], 
+                            (string) thread["last_message_id"], 
                             isActive, 
-                            (bool)thread["thread_metadata"]["locked"]
+                            (bool) thread["thread_metadata"]["locked"]
                         ));
                     }
                 }
-            }catch(Exception ex){
+            } catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
         }
@@ -103,7 +101,7 @@ namespace DiscordThreadManager
                 }
                 MessageBox.Show($"Action was successful!");
             }
-            catch(Exception ex){
+            catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
 
@@ -114,8 +112,8 @@ namespace DiscordThreadManager
             WriteToListBox();
         }
 
-        private async void Lock_Unlock_Click(object sender, RoutedEventArgs e){
-            try{
+        private async void Lock_Unlock_Click(object sender, RoutedEventArgs e) {
+            try {
                 Thread currentThread = Threads[ThreadList.SelectedIndex];
                 HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
 
@@ -128,6 +126,8 @@ namespace DiscordThreadManager
                 }
                 MessageBox.Show($"Action was successful!");
             }catch (Exception ex){
+            }
+            catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
 
@@ -138,11 +138,11 @@ namespace DiscordThreadManager
             WriteToListBox();
         }
 
-        private void Open_Thread_Click(object sender, RoutedEventArgs e){
+        private void Open_Thread_Click(object sender, RoutedEventArgs e) {
             try {
                 Thread currentThread = Threads[ThreadList.SelectedIndex];
                 Process.Start($"discord://-/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}");
-            }catch (Exception ex){
+            } catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
         }
