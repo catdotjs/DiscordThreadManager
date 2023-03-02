@@ -102,15 +102,12 @@ namespace DiscordThreadManager
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
                 MessageBox.Show($"Action was successful!");
+                currentThread.isActive = !currentThread.isActive;
+                Threads[ThreadList.SelectedIndex] = currentThread;
             }
             catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
-
-            //Reload the list
-            Threads.Clear();
-            await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
-            await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
             WriteToListBox();
         }
 
@@ -127,16 +124,14 @@ namespace DiscordThreadManager
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
                 MessageBox.Show($"Action was successful!");
-            }catch (Exception ex){
+                currentThread.isLocked = !currentThread.isLocked;
+                Threads[ThreadList.SelectedIndex] = currentThread;
             }
             catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
 
             //Reload the list
-            Threads.Clear();
-            await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
-            await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
             WriteToListBox();
         }
 
