@@ -8,6 +8,8 @@
         Title="Discord Thread Manager" Height="475" Width="1147" FontFamily="Trebuchet MS" FontSize="16">
     <Grid x:Name="Body" Background="#FF513F5F">
         <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled"/>
+
+        <Label Content="Made with love, by catdotjs" VerticalAlignment="Top" FontSize="12" Foreground="White" HorizontalAlignment="Left" Width="163" Margin="2,-6,0,0" Height="23"/>
         <!-- Textbox n shit -->
         <Grid HorizontalAlignment="Left" Height="60" Margin="20,7,0,0" VerticalAlignment="Top" Width="599">
             <TextBox x:Name="GuildId" Margin="364,1,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="25" FontSize="20" Text="208895639164026880" InputScope="Digits" HorizontalAlignment="Left" Width="235"/>
