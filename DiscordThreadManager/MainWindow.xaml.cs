@@ -17,11 +17,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 
-namespace DiscordThreadManager
-{
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+namespace DiscordThreadManager {
     public partial class MainWindow : Window {
         public HttpClient Client = new HttpClient();
         public List<Thread> Threads = new List<Thread>();
@@ -73,12 +69,14 @@ namespace DiscordThreadManager
             }
         }
 
-        private string ThreadToString(Thread t) {
-            DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long) t.LastMessageTime);
+        private string ThreadToString(Thread thread) {
+            DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long) thread.LastMessageTime);
             TimeSpan timeSpan = DateTime.UtcNow - TimeOfLastMessage;
+
             string time = timeSpan.Days > 3 ? $"{Math.Round(timeSpan.TotalDays, 1)} days" : $"{Math.Round(timeSpan.TotalHours, 1)} hours";
-            string emojis = (t.isLocked ? this.LockEmoji[0] : this.LockEmoji[1]) + (t.isActive ? "🔴" : "❌");
-            return $"{emojis} {t.Name} ({time})";
+            string emojis = (thread.isLocked ? LockEmoji[0] : LockEmoji[1]) + (thread.isActive ? "🔴" : "❌");
+
+            return $"{emojis} {thread.Name} ({time})";
         }
 
         private void WriteToListBox() {
