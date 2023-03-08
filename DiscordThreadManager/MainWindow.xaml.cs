@@ -90,8 +90,10 @@ namespace DiscordThreadManager {
         }
 
         private async void Archive_UnArchive_Click(object sender, RoutedEventArgs e) {
+            int index = ThreadList.SelectedIndex;
+            Archive_UnArchive.IsEnabled = false;
             try { 
-                Thread currentThread = Threads[ThreadList.SelectedIndex];
+                Thread currentThread = Threads[index];
                 HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
 
                 patchThread.Content = new StringContent($"{{\"archived\":{currentThread.isActive}}}".ToLower(), Encoding.UTF8, "application/json");
@@ -101,38 +103,43 @@ namespace DiscordThreadManager {
                 if (!resp.IsSuccessStatusCode){
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
-                MessageBox.Show($"Action was successful!");
+                // MessageBox.Show($"Action was successful!");
                 currentThread.isActive = !currentThread.isActive;
-                Threads[ThreadList.SelectedIndex] = currentThread;
+                Threads[index] = currentThread;
             }
             catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
             WriteToListBox();
+            ThreadList.SelectedIndex = index;
+            Archive_UnArchive.IsEnabled = true;
         }
 
         private async void Lock_Unlock_Click(object sender, RoutedEventArgs e) {
+            int index = ThreadList.SelectedIndex;
+            Lock_Unlock.IsEnabled = false;
             try {
-                Thread currentThread = Threads[ThreadList.SelectedIndex];
+                Thread currentThread = Threads[index];
                 HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
 
-                patchThread.Content = new StringContent($"{{\"locked\":{!currentThread.isLocked}}}".ToLower(), Encoding.UTF8, "application/json");
+                patchThread.Content = new StringContent($"{{\"locked\":{!currentThread.isLocked}, \"archived\": true}}".ToLower(), Encoding.UTF8, "application/json");
                 patchThread.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
                 HttpResponseMessage resp = await Client.SendAsync(patchThread);
                 if (!resp.IsSuccessStatusCode){
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
-                MessageBox.Show($"Action was successful!");
+                // MessageBox.Show($"Action was successful!");
+                currentThread.isActive = false;
                 currentThread.isLocked = !currentThread.isLocked;
-                Threads[ThreadList.SelectedIndex] = currentThread;
+                Threads[index] = currentThread;
             }
             catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
-
-            //Reload the list
             WriteToListBox();
+            ThreadList.SelectedIndex = index;     
+            Lock_Unlock.IsEnabled = true;
         }
 
         private void Open_Thread_Click(object sender, RoutedEventArgs e) {
