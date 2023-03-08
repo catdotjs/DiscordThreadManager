@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
+using System.Reflection;
+using System.Threading;
 
 namespace DiscordThreadManager {
     public partial class MainWindow : Window {
@@ -144,6 +146,18 @@ namespace DiscordThreadManager {
 
         private void ThreadList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             Open_Thread_Click(sender, e);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Enter) {
+                Open_Thread_Click(sender, e);
+            }
+            else if (e.Key == Key.O) { 
+                Lock_Unlock_Click(sender, e);
+            }
+            else if (e.Key == Key.P) {
+                Archive_UnArchive_Click(sender, e);
+            }
         }
     }
 }
