@@ -156,14 +156,16 @@ namespace DiscordThreadManager {
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.Enter) {
-                Open_Thread_Click(sender, e);
-            }
-            else if (e.Key == Key.O) { 
-                Lock_Unlock_Click(sender, e);
-            }
-            else if (e.Key == Key.P) {
-                Archive_UnArchive_Click(sender, e);
+            switch (e.Key) {
+                case Key.Enter:
+                    Open_Thread_Click(sender, e);
+                    break;
+                case Key.O:
+                    Lock_Unlock_Click(sender, e);
+                    break;
+                case Key.P:
+                    Archive_UnArchive_Click(sender, e);
+                    break;
             }
         }
     }
