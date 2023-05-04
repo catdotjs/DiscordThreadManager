@@ -18,12 +18,16 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace DiscordThreadManager {
+
     public partial class MainWindow : Window {
+
         public HttpClient Client = new HttpClient();
         public List<Thread> Threads = new List<Thread>();
-        public DateTime DiscordEpoch = new DateTime(2015,1,1);
+        public DateTime DiscordEpoch = new DateTime(2015, 1, 1);
+        public bool ShowLocked = false;
 
         private readonly string[] LockEmoji = { "🔒" , "  \u2006\u2006\u2006\u2006\u2006" };
 
@@ -31,9 +35,16 @@ namespace DiscordThreadManager {
             InitializeComponent();
             Client.BaseAddress = new Uri("https://discord.com/api/v10/");
             Token.Password = Environment.GetEnvironmentVariable("THREAD_MANAGER_TOKEN");
+            if(!(Token.Password == null || Token.Password == "")) RefreshButtonClick(null, null);
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e) {
+        /// <summary>
+        /// Handle the refresh button being clicked.
+        /// </summary>
+        private async void RefreshButtonClick(object sender, RoutedEventArgs e) {
+            // Disable button
+            RefreshButton.IsEnabled = false;
+
             //Clear and re-write
             Threads.Clear();
             ThreadList.Items.Clear();
@@ -41,29 +52,41 @@ namespace DiscordThreadManager {
             //Need to await Get Thread first
             Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", Token.Password.Trim());
             Threads.Clear();
-            await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
-            await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
-            WriteToListBox();
+            await GetThreadsAPICall($"guilds/{GuildId.Text}/threads/active", true);
+            await GetThreadsAPICall($"channels/{ChannelId.Text}/threads/archived/public", false);
+            WriteThreadsToListbox();
+
+            // Enable button
+            RefreshButton.IsEnabled = true;
         }
 
-        private async Task GetThreads(string apiPath, bool isActive) {
+        /// <summary>
+        /// Ask the Discord API for threads.
+        /// </summary>
+        private async Task GetThreadsAPICall(string apiPath, bool isActive) {
             try {
-                HttpResponseMessage resp = await Client.GetAsync(apiPath);
-                if (!resp.IsSuccessStatusCode) {
-                    throw new Exception("Discord API Error");
-                }
 
+                // Call the API
+                HttpResponseMessage resp = await Client.GetAsync(apiPath);
+                if (!resp.IsSuccessStatusCode) throw new Exception("Discord API Error");
+
+                // Get and parse response
                 string respString = await resp.Content.ReadAsStringAsync();
                 JObject respJSON = JObject.Parse(respString);
                 JArray threads = (JArray) respJSON["threads"];
+
+                // Add all threads to an object
                 foreach (JObject thread in threads) {
                     if ((string) thread["parent_id"] == ChannelId.Text & (string) thread["flags"] != "2") {
-                        Threads.Add(new Thread((string) thread["id"], 
-                            (string) thread["name"], 
-                            (string) thread["last_message_id"], 
-                            isActive, 
-                            (bool) thread["thread_metadata"]["locked"]
-                        ));
+                        Threads.Add(
+                            new Thread(
+                                (string) thread["id"],
+                                (string) thread["name"],
+                                (string) thread["last_message_id"],
+                                isActive,
+                                (bool) thread["thread_metadata"]["locked"]
+                            )
+                        );
                     }
                 }
             } catch(Exception ex) {
@@ -71,65 +94,99 @@ namespace DiscordThreadManager {
             }
         }
 
+        /// <summary>
+        /// Change a thread neatly into a string.
+        /// </summary>
         private string ThreadToString(Thread thread) {
-            DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long) thread.LastMessageTime);
-            TimeSpan timeSpan = DateTime.UtcNow - TimeOfLastMessage;
-
+            DateTime timeOfLastMessage = DiscordEpoch.AddMilliseconds((long) thread.LastMessageTime);
+            TimeSpan timeSpan = DateTime.UtcNow - timeOfLastMessage;
             string time = timeSpan.Days > 3 ? $"{Math.Round(timeSpan.TotalDays, 1)} days" : $"{Math.Round(timeSpan.TotalHours, 1)} hours";
             string emojis = (thread.isLocked ? LockEmoji[0] : LockEmoji[1]) + (thread.isActive ? "🔴" : "❌");
-
             return $"{emojis} {thread.Name} ({time})";
         }
 
-        private void WriteToListBox() {
-            ThreadList.Items.Clear();
-            Threads = Threads.OrderByDescending(a => a.LastMessageTime).ToList();
+        /// <summary>
+        /// Get a list of visible threads.
+        /// </summary>
+        private List<Thread> GetThreads() {
+            List<Thread> localThreads = new List<Thread>();
             foreach (Thread thread in Threads) {
+                if (ShowLocked == false && thread.isLocked) continue;
+                localThreads.Add(thread);
+            }
+            return localThreads.OrderByDescending(a => a.LastMessageTime).ToList();
+        }
+
+        /// <summary>
+        /// Get a thread with the given ID, returning both the index at which it appears in the main thread list, and the thread itself.
+        /// </summary>
+        private (int, Thread) GetSelectedThread() {
+            Thread currentThread = GetThreads()[ThreadList.SelectedIndex];
+            int index = 0;
+            foreach (Thread thread in Threads) {
+                if(thread.Id == currentThread.Id) return (index, thread);
+                index++;
+            }
+            throw new Exception("Missing thread");
+        }
+
+        /// <summary>
+        /// Clear and re-write the thread list.
+        /// </summary>
+        private void WriteThreadsToListbox() {
+            ThreadList.Items.Clear();
+            List<Thread> localThreads = GetThreads();
+            foreach (Thread thread in localThreads) {
                 ThreadList.Items.Add(ThreadToString(thread));
             }
         }
 
-        private async void Archive_UnArchive_Click(object sender, RoutedEventArgs e) {
-            int index = ThreadList.SelectedIndex;
-            Archive_UnArchive.IsEnabled = false;
-            try { 
-                Thread currentThread = Threads[index];
-                HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
+        /// <summary>
+        /// Handle the archive button being pressed.
+        /// </summary>
+        private async void ArchiveButtonClick(object sender, RoutedEventArgs e) {
+            // Get current thread
+            (int index, Thread currentThread) = GetSelectedThread();
 
-                patchThread.Content = new StringContent($"{{\"archived\":{currentThread.isActive}}}".ToLower(), Encoding.UTF8, "application/json");
-                patchThread.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
+            // Perform API request
+            HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
+            patchThread.Content = new StringContent($"{{\"archived\":{currentThread.isActive}}}".ToLower(), Encoding.UTF8, "application/json");
+            patchThread.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            try {
                 HttpResponseMessage resp = await Client.SendAsync(patchThread);
                 if (!resp.IsSuccessStatusCode){
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
-                // MessageBox.Show($"Action was successful!");
                 currentThread.isActive = !currentThread.isActive;
                 Threads[index] = currentThread;
             }
             catch(Exception ex) {
                 MessageBox.Show(ex.Message);
+                return;
             }
-            WriteToListBox();
-            ThreadList.SelectedIndex = index;
-            Archive_UnArchive.IsEnabled = true;
+
+            // Update shown threads
+            int currentIndex = ThreadList.SelectedIndex;
+            WriteThreadsToListbox();
+            ThreadList.SelectedIndex = currentIndex;
         }
 
-        private async void Lock_Unlock_Click(object sender, RoutedEventArgs e) {
-            int index = ThreadList.SelectedIndex;
-            Lock_Unlock.IsEnabled = false;
+        /// <summary>
+        /// Handle the lock button being pressed.
+        /// </summary>
+        private async void LockButtonClick(object sender, RoutedEventArgs e) {
+            // Get current thread
+            (int index, Thread currentThread) = GetSelectedThread();
+
+            // Perform API request
+            HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
+            patchThread.Content = new StringContent($"{{\"locked\":{!currentThread.isLocked}, \"archived\": true}}".ToLower(), Encoding.UTF8, "application/json");
+            patchThread.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             try {
-                Thread currentThread = Threads[index];
-                HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
-
-                patchThread.Content = new StringContent($"{{\"locked\":{!currentThread.isLocked}, \"archived\": true}}".ToLower(), Encoding.UTF8, "application/json");
-                patchThread.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
                 HttpResponseMessage resp = await Client.SendAsync(patchThread);
                 if (!resp.IsSuccessStatusCode){
                     throw new Exception($"Discord API Error - {resp.StatusCode} \n{await resp.Content.ReadAsStringAsync()}");
                 }
-                // MessageBox.Show($"Action was successful!");
                 currentThread.isActive = false;
                 currentThread.isLocked = !currentThread.isLocked;
                 Threads[index] = currentThread;
@@ -137,36 +194,55 @@ namespace DiscordThreadManager {
             catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
-            WriteToListBox();
-            ThreadList.SelectedIndex = index;     
-            Lock_Unlock.IsEnabled = true;
+
+            // Update shown threads
+            int currentIndex = ThreadList.SelectedIndex;
+            WriteThreadsToListbox();
+            ThreadList.SelectedIndex = currentIndex;
         }
 
-        private void Open_Thread_Click(object sender, RoutedEventArgs e) {
-            try {
-                Thread currentThread = Threads[ThreadList.SelectedIndex];
-                Process.Start($"discord://-/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}");
-            } catch (Exception ex) {
-                MessageBox.Show(ex.Message);
-            }
+        /// <summary>
+        /// Handle the thread open button being pressed.
+        /// </summary>
+        private void ThreadOpenButtonClick(object sender, RoutedEventArgs e) {
+            (int index, Thread currentThread) = GetSelectedThread();
+            Process.Start($"discord://-/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}");
         }
 
-        private void ThreadList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            Open_Thread_Click(sender, e);
+        /// <summary>
+        /// Handle a thread item being double clicked.
+        /// </summary>
+        private void ThreadListItemClick(object sender, MouseButtonEventArgs e) {
+            ThreadOpenButtonClick(sender, e);
         }
 
-        private void Window_KeyDown(object sender, KeyEventArgs e) {
+        /// <summary>
+        /// Handle the "show locked threads" button being clicked.
+        /// </summary>
+        private void ShowLockedButtonClick(object sender, RoutedEventArgs e) {
+            ShowLocked = !ShowLocked;
+            WriteThreadsToListbox();
+        }
+
+        /// <summary>
+        /// Handle all button presses on the window.
+        /// </summary>
+        private void WindowKeyPress(object sender, KeyEventArgs e) {
             switch (e.Key) {
                 case Key.Enter:
-                    Open_Thread_Click(sender, e);
+                    ThreadOpenButtonClick(sender, e);
                     break;
                 case Key.O:
-                    Lock_Unlock_Click(sender, e);
+                    LockButtonClick(sender, e);
                     break;
                 case Key.P:
-                    Archive_UnArchive_Click(sender, e);
+                    ArchiveButtonClick(sender, e);
+                    break;
+                case Key.F5:
+                    RefreshButtonClick(sender, e);
                     break;
             }
         }
+
     }
 }
