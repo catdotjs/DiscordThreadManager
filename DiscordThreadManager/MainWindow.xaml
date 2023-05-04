@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiscordThreadManager"
         mc:Ignorable="d"
-        Title="Discord Thread Manager" Height="475" Width="1080" FontFamily="Trebuchet MS" FontSize="16"
+        Title="Discord Thread Manager" Height="475" Width="1178" FontFamily="Trebuchet MS" FontSize="16"
         KeyDown="WindowKeyPress">
 
     <Grid x:Name="Body" Background="#FF513F5F">
-        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseDoubleClick="ThreadListItemClick" SelectionChanged="ThreadList_SelectionChanged"/>
+        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseDoubleClick="ThreadListItemClick"/>
         <Label Content="Made with love, by catdotjs" VerticalAlignment="Top" FontSize="12" Foreground="White" HorizontalAlignment="Left" Width="163" Margin="2,-6,0,0" Height="23"/>
 
         <!-- Textbox n shit -->
@@ -23,11 +23,12 @@
         </Grid>
 
         <!-- Buttons -->
-        <Grid VerticalAlignment="Top" Margin="624,7,0,0" HorizontalAlignment="Left" Width="456">
+        <Grid VerticalAlignment="Top" Margin="624,7,0,0" HorizontalAlignment="Left" Width="513">
             <Button x:Name="RefreshButton" Content="Submit/Refresh" Click="RefreshButtonClick" FontSize="16" Height="57" VerticalAlignment="Center" HorizontalAlignment="Left" Width="120"/>
             <Button x:Name="Open_Thread" Content="Open Thread" FontSize="16" Height="56" VerticalAlignment="Center" HorizontalAlignment="Left" Width="120" Margin="317,0,0,0" Click="ThreadOpenButtonClick"/>
-            <Button x:Name="Archive_UnArchive" Content="(P) Archive/Unarchive" Margin="124,3,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="ArchiveButtonClick"/>
-            <Button x:Name="Lock_Unlock" Content="(O) Lock/Unlock" Margin="124,31,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="LockButtonClick"/>
+            <Button x:Name="ArchiveButton" Content="(P) Archive/Unarchive" Margin="124,3,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="ArchiveButtonClick"/>
+            <Button x:Name="LockButton" Content="(O) Lock/Unlock" Margin="124,31,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="LockButtonClick"/>
+            <Button x:Name="ShowLockedButton" Content="Show" FontSize="16" Height="56" VerticalAlignment="Center" HorizontalAlignment="Left" Width="61" Margin="442,0,0,0" Click="ShowLockedButtonClick"/>
         </Grid>
 
     </Grid>
