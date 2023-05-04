@@ -31,12 +31,10 @@ namespace DiscordThreadManager {
             InitializeComponent();
             Client.BaseAddress = new Uri("https://discord.com/api/v10/");
             Token.Password = Environment.GetEnvironmentVariable("THREAD_MANAGER_TOKEN");
-            if(!(Token.Password == null || Token.Password == "")) {
-                Button_Click(null, null);
-            }
+            if(!(Token.Password == null || Token.Password == "")) RefreshButtonClick(null, null);
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e) {
+        private async void RefreshButtonClick(object sender, RoutedEventArgs e) {
             // Disable button
             RefreshButton.IsEnabled = false;
 
@@ -47,30 +45,28 @@ namespace DiscordThreadManager {
             //Need to await Get Thread first
             Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", Token.Password.Trim());
             Threads.Clear();
-            await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
-            await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
-            WriteToListBox();
+            await GetThreadsAPICall($"guilds/{GuildId.Text}/threads/active", true);
+            await GetThreadsAPICall($"channels/{ChannelId.Text}/threads/archived/public", false);
+            WriteThreadsToListbox();
 
             // Enable button
             RefreshButton.IsEnabled = true;
         }
 
-        private async Task GetThreads(string apiPath, bool isActive) {
+        private async Task GetThreadsAPICall(string apiPath, bool isActive) {
             try {
                 HttpResponseMessage resp = await Client.GetAsync(apiPath);
-                if (!resp.IsSuccessStatusCode) {
-                    throw new Exception("Discord API Error");
-                }
+                if (!resp.IsSuccessStatusCode) throw new Exception("Discord API Error");
 
                 string respString = await resp.Content.ReadAsStringAsync();
                 JObject respJSON = JObject.Parse(respString);
                 JArray threads = (JArray) respJSON["threads"];
                 foreach (JObject thread in threads) {
                     if ((string) thread["parent_id"] == ChannelId.Text & (string) thread["flags"] != "2") {
-                        Threads.Add(new Thread((string) thread["id"], 
-                            (string) thread["name"], 
-                            (string) thread["last_message_id"], 
-                            isActive, 
+                        Threads.Add(new Thread((string) thread["id"],
+                            (string) thread["name"],
+                            (string) thread["last_message_id"],
+                            isActive,
                             (bool) thread["thread_metadata"]["locked"]
                         ));
                     }
@@ -83,14 +79,12 @@ namespace DiscordThreadManager {
         private string ThreadToString(Thread thread) {
             DateTime TimeOfLastMessage = DiscordEpoch.AddMilliseconds((long) thread.LastMessageTime);
             TimeSpan timeSpan = DateTime.UtcNow - TimeOfLastMessage;
-
             string time = timeSpan.Days > 3 ? $"{Math.Round(timeSpan.TotalDays, 1)} days" : $"{Math.Round(timeSpan.TotalHours, 1)} hours";
             string emojis = (thread.isLocked ? LockEmoji[0] : LockEmoji[1]) + (thread.isActive ? "🔴" : "❌");
-
             return $"{emojis} {thread.Name} ({time})";
         }
 
-        private void WriteToListBox() {
+        private void WriteThreadsToListbox() {
             ThreadList.Items.Clear();
             Threads = Threads.OrderByDescending(a => a.LastMessageTime).ToList();
             foreach (Thread thread in Threads) {
@@ -98,10 +92,10 @@ namespace DiscordThreadManager {
             }
         }
 
-        private async void Archive_UnArchive_Click(object sender, RoutedEventArgs e) {
+        private async void ArchiveButtonClick(object sender, RoutedEventArgs e) {
             int index = ThreadList.SelectedIndex;
             Archive_UnArchive.IsEnabled = false;
-            try { 
+            try {
                 Thread currentThread = Threads[index];
                 HttpRequestMessage patchThread = new HttpRequestMessage(new HttpMethod("PATCH"), $"channels/{currentThread.Id}");
 
@@ -119,12 +113,12 @@ namespace DiscordThreadManager {
             catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
-            WriteToListBox();
+            WriteThreadsToListbox();
             ThreadList.SelectedIndex = index;
             Archive_UnArchive.IsEnabled = true;
         }
 
-        private async void Lock_Unlock_Click(object sender, RoutedEventArgs e) {
+        private async void LockButtonClick(object sender, RoutedEventArgs e) {
             int index = ThreadList.SelectedIndex;
             Lock_Unlock.IsEnabled = false;
             try {
@@ -146,12 +140,12 @@ namespace DiscordThreadManager {
             catch (Exception ex) {
                 MessageBox.Show(ex.Message);
             }
-            WriteToListBox();
-            ThreadList.SelectedIndex = index;     
+            WriteThreadsToListbox();
+            ThreadList.SelectedIndex = index;
             Lock_Unlock.IsEnabled = true;
         }
 
-        private void Open_Thread_Click(object sender, RoutedEventArgs e) {
+        private void ThreadOpenButtonClick(object sender, RoutedEventArgs e) {
             try {
                 Thread currentThread = Threads[ThreadList.SelectedIndex];
                 Process.Start($"discord://-/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}");
@@ -160,23 +154,23 @@ namespace DiscordThreadManager {
             }
         }
 
-        private void ThreadList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            Open_Thread_Click(sender, e);
+        private void ThreadListItemClick(object sender, MouseButtonEventArgs e) {
+            ThreadOpenButtonClick(sender, e);
         }
 
-        private void Window_KeyDown(object sender, KeyEventArgs e) {
+        private void WindowKeyPress(object sender, KeyEventArgs e) {
             switch (e.Key) {
                 case Key.Enter:
-                    Open_Thread_Click(sender, e);
+                    ThreadOpenButtonClick(sender, e);
                     break;
                 case Key.O:
-                    Lock_Unlock_Click(sender, e);
+                    LockButtonClick(sender, e);
                     break;
                 case Key.P:
-                    Archive_UnArchive_Click(sender, e);
+                    ArchiveButtonClick(sender, e);
                     break;
                 case Key.F5:
-                    Button_Click(sender, e);
+                    RefreshButtonClick(sender, e);
                     break;
             }
         }
