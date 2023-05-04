@@ -31,9 +31,15 @@ namespace DiscordThreadManager {
             InitializeComponent();
             Client.BaseAddress = new Uri("https://discord.com/api/v10/");
             Token.Password = Environment.GetEnvironmentVariable("THREAD_MANAGER_TOKEN");
+            if(!(Token.Password == null || Token.Password == "")) {
+                Button_Click(null, null);
+            }
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
+            // Disable button
+            RefreshButton.IsEnabled = false;
+
             //Clear and re-write
             Threads.Clear();
             ThreadList.Items.Clear();
@@ -44,6 +50,9 @@ namespace DiscordThreadManager {
             await GetThreads($"guilds/{GuildId.Text}/threads/active", true);
             await GetThreads($"channels/{ChannelId.Text}/threads/archived/public", false);
             WriteToListBox();
+
+            // Enable button
+            RefreshButton.IsEnabled = true;
         }
 
         private async Task GetThreads(string apiPath, bool isActive) {
@@ -165,6 +174,9 @@ namespace DiscordThreadManager {
                     break;
                 case Key.P:
                     Archive_UnArchive_Click(sender, e);
+                    break;
+                case Key.F5:
+                    Button_Click(sender, e);
                     break;
             }
         }

@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiscordThreadManager"
         mc:Ignorable="d"
-        Title="Discord Thread Manager" Height="475" Width="1147" FontFamily="Trebuchet MS" FontSize="16"
+        Title="Discord Thread Manager" Height="475" Width="1080" FontFamily="Trebuchet MS" FontSize="16"
         KeyDown="Window_KeyDown">
     <Grid x:Name="Body" Background="#FF513F5F">
-        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseDoubleClick="ThreadList_MouseDoubleClick"/>
+        <ListBox x:Name="ThreadList" d:ItemsSource="{d:SampleData ItemCount=20}" Margin="16,68,16,16" Background="#FF6C6C6C" Foreground="White" BorderBrush="#FF3A2D44" FontFamily="Trebuchet MS" FontSize="20" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseDoubleClick="ThreadList_MouseDoubleClick" SelectionChanged="ThreadList_SelectionChanged"/>
 
         <Label Content="Made with love, by catdotjs" VerticalAlignment="Top" FontSize="12" Foreground="White" HorizontalAlignment="Left" Width="163" Margin="2,-6,0,0" Height="23"/>
         <!-- Textbox n shit -->
@@ -21,8 +21,8 @@
             <Label Content="Channel ID" VerticalAlignment="Top" FontSize="16" Foreground="White" Margin="272,31,0,0" HorizontalAlignment="Left" Width="87"/>
         </Grid>
         <!-- Buttons -->
-        <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="507" Margin="624,7,0,0" Grid.ColumnSpan="3" Grid.RowSpan="2">
-            <Button Content="Submit/Refresh" Click="Button_Click" FontSize="16" Height="57" VerticalAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Grid VerticalAlignment="Top" Margin="624,7,0,0" HorizontalAlignment="Left" Width="456">
+            <Button x:Name="RefreshButton" Content="Submit/Refresh" Click="Button_Click" FontSize="16" Height="57" VerticalAlignment="Center" HorizontalAlignment="Left" Width="120"/>
             <Button x:Name="Open_Thread" Content="Open Thread" FontSize="16" Height="56" VerticalAlignment="Center" HorizontalAlignment="Left" Width="120" Margin="317,0,0,0" Click="Open_Thread_Click"/>
             <Button x:Name="Archive_UnArchive" Content="(P) Archive/Unarchive" Margin="124,3,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="Archive_UnArchive_Click"/>
             <Button x:Name="Lock_Unlock" Content="(O) Lock/Unlock" Margin="124,31,0,0" FontSize="16" VerticalAlignment="Top" HorizontalAlignment="Left" Width="188" Click="Lock_Unlock_Click"/>
