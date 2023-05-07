@@ -193,6 +193,7 @@ namespace DiscordThreadManager {
             }
             catch (Exception ex) {
                 MessageBox.Show(ex.Message);
+                return;
             }
 
             // Update shown threads
@@ -225,6 +226,23 @@ namespace DiscordThreadManager {
         }
 
         /// <summary>
+        /// Delete a thread.
+        /// </summary>
+        private async void DeleteSelectedThread(object sender, EventArgs e) {
+            (int index, Thread currentThread) = GetSelectedThread();
+            HttpRequestMessage deleteThread = new HttpRequestMessage(new HttpMethod("DELETE"), $"channels/{currentThread.Id}");
+            try {
+                HttpResponseMessage resp = await Client.SendAsync(deleteThread);
+            }
+            catch (Exception ex) {
+                MessageBox.Show(ex.Message);
+                return;
+            }
+            Threads.Remove(currentThread);
+            WriteThreadsToListbox();
+        }
+
+        /// <summary>
         /// Handle all button presses on the window.
         /// </summary>
         private void WindowKeyPress(object sender, KeyEventArgs e) {
@@ -240,6 +258,16 @@ namespace DiscordThreadManager {
                     break;
                 case Key.F5:
                     RefreshButtonClick(sender, e);
+                    break;
+                case Key.Delete:
+                    DeleteSelectedThread(sender, e);
+                    break;
+                case Key.C:
+                    if (Keyboard.Modifiers == ModifierKeys.Control) {
+                        (int index, Thread currentThread) = GetSelectedThread();
+                        String threadUrl = $"https://discord.com/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}";
+                        Clipboard.SetText(threadUrl);
+                    }
                     break;
             }
         }
