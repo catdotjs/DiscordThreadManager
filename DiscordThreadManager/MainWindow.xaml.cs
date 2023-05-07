@@ -262,6 +262,13 @@ namespace DiscordThreadManager {
                 case Key.Delete:
                     DeleteSelectedThread(sender, e);
                     break;
+                case Key.C:
+                    if (Keyboard.Modifiers == ModifierKeys.Control) {
+                        (int index, Thread currentThread) = GetSelectedThread();
+                        String threadUrl = $"https://discord.com/channels/{GuildId.Text}/{ChannelId.Text}/threads/{currentThread.Id}";
+                        Clipboard.SetText(threadUrl);
+                    }
+                    break;
             }
         }
 
